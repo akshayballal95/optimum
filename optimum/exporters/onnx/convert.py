@@ -685,7 +685,7 @@ def export_tensorflow(
     inputs = config.ordered_inputs(model)
     input_names = list(inputs.keys())
     output_names = list(config.outputs.keys())
-
+    
     input_signature = []
     for key, tensor in dummy_inputs.items():
         shape = [tensor.shape[i] for i in range(tensor.ndim)]

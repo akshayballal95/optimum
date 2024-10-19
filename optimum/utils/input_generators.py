@@ -27,6 +27,7 @@ from .normalized_config import (
     NormalizedConfig,
     NormalizedEncoderDecoderConfig,
     NormalizedSeq2SeqConfig,
+    NormalizedTextAndVisionConfig,
     NormalizedTextConfig,
     NormalizedVisionConfig,
 )
@@ -441,8 +442,59 @@ class DummyTextInputGenerator(DummyInputGenerator):
         if "mask" in input_name:
             return self.random_mask_tensor(shape, padding_side=self.padding_side, framework=framework, dtype=int_dtype)
         else:
+            print(shape)
             return self.random_int_tensor(shape, max_value, min_value=min_value, framework=framework, dtype=int_dtype)
 
+
+class DummyTextVisionInputGenerator(DummyInputGenerator):
+    SUPPORTED_INPUT_NAMES = ("input_ids", "attention_mask")
+
+    def __init__(
+        self,
+        task: str,
+        normalized_config: NormalizedTextConfig,
+        batch_size: int = DEFAULT_DUMMY_SHAPES["batch_size"],
+        sequence_length: int = DEFAULT_DUMMY_SHAPES["sequence_length"],
+        padding_side: str = "right",
+        **kwargs,
+    ):
+        self.task = task
+        self.normalized_config = normalized_config
+        self.batch_size = batch_size
+        self.sequence_length = sequence_length
+        self.padding_side = padding_side
+    def generate(
+        self,
+        input_name: str,
+        framework: str = "pt",
+        int_dtype: str = "int64",
+        float_dtype: str = "fp32",
+    ):
+        min_value = 0
+        max_value = self.normalized_config.vocab_size
+        if input_name == "input_ids":
+            # Create a tensor filled with 27152
+            prefix_tensor = self.constant_tensor(
+                shape=[self.batch_size, 1024],
+                value=257152,
+                dtype=DTYPE_MAPPER.pt(int_dtype) if framework == "pt" else DTYPE_MAPPER.tf(int_dtype),
+                framework=framework,
+            )
+            # Generate the dummy input tensor
+            dummy_input = self.random_int_tensor(
+                shape=[self.batch_size, self.sequence_length],
+                max_value=max_value,
+                min_value=min_value,
+                framework=framework,
+                dtype=int_dtype,
+            )
+            # Concatenate the prefix tensor with the dummy input tensor
+            out = self.concat_inputs([prefix_tensor, dummy_input], dim=1)
+            print(out.shape)
+            print(out)
+            return out
+        if "mask" in input_name:
+            return self.random_mask_tensor(shape=[self.batch_size, self.sequence_length + 1024], padding_side=self.padding_side, framework=framework, dtype=int_dtype)
 
 class DummyXPathSeqInputGenerator(DummyTextInputGenerator):
     """

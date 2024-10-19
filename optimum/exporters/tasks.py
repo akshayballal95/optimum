@@ -915,6 +915,15 @@ class TasksManager:
             "text-classification",
             onnx="LlamaOnnxConfig",
         ),
+        "paligemma": supported_tasks_mapping(
+            "feature-extraction",
+            "text-generation",
+            "image-to-text",
+            "document-question-answering",
+            "feature-extraction-with-past",
+            "text-generation-with-past",
+            onnx="PaliGemmaOnnxConfig",
+        ),
         "pegasus": supported_tasks_mapping(
             "feature-extraction",
             "feature-extraction-with-past",

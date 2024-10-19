@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Uni
 from packaging import version
 from transformers.utils import is_tf_available
 
+from optimum.utils.input_generators import DummyTextVisionInputGenerator
+
 from ...onnx import merge_decoders
 from ...utils import (
     DEFAULT_DUMMY_SHAPES,
@@ -82,6 +84,7 @@ from .model_patcher import (
     SpeechT5ModelPatcher,
     VisionEncoderDecoderPatcher,
     WavLMModelPatcher,
+    PaliGemmaModelPatcher
 )
 
 
@@ -2310,3 +2313,28 @@ class Pix2StructOnnxConfig(OnnxSeq2SeqConfigWithPast):
 
 class EncoderDecoderOnnxConfig(EncoderDecoderBaseOnnxConfig):
     NORMALIZED_CONFIG_CLASS = NormalizedEncoderDecoderConfig
+
+
+
+class PaliGemmaOnnxConfig(GemmaOnnxConfig):
+
+    DUMMY_INPUT_GENERATOR_CLASSES = (DummyTextVisionInputGenerator, DummyVisionInputGenerator)
+    
+    NORMALIZED_CONFIG_CLASS = NormalizedTextAndVisionConfig.with_args(
+        text_config="text_config", vision_config="vision_config"
+    )
+    @property
+    def inputs(self) -> Dict[str, Dict[int, str]]:        
+        dynamic_axis = {0:"batch_size", 1:"sequence_length"}
+
+        return {
+            'input_ids': dynamic_axis,
+            'attention_mask': dynamic_axis,
+            'pixel_values': dynamic_axis
+        }
+
+    @property
+    def outputs(self) -> Dict[str, Dict[int, str]]:
+        return {
+            'logits': {0: 'batch_size', 1: 'sequence_length'}
+        }

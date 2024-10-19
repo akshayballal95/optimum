@@ -1155,3 +1155,11 @@ class CLIPModelPatcher(ModelPatcher):
             from transformers.models.clip.modeling_clip import CLIPSdpaAttention
 
             CLIPSdpaAttention.forward = self.original_sdpa_forward
+
+class PaliGemmaModelPatcher(ModelPatcher):
+
+    def __init__(self, config: "OnnxConfig", model: Union["PreTrainedModel", "TFPreTrainedModel"], model_kwargs: Dict[str, Any]):
+        super().__init__(config, model, model_kwargs)
+        
+
+        self.patched_forward = model.language_model.forward
